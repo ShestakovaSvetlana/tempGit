@@ -1,0 +1,22 @@
+{
+  "name": "tempgit",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ShestakovaSvetlana/tempGit.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ShestakovaSvetlana/tempGit/issues"
+  },
+  "homepage": "https://github.com/ShestakovaSvetlana/tempGit#readme",
+  "description": "",
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "@types/node": "^24.10.1"
+  }
+}
