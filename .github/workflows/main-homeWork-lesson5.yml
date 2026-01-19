@@ -1,0 +1,24 @@
+name: playwright api and ui test
+# when it triggers
+on:
+  push:
+    branches:
+      - homeWork-lesson5
+# manual start
+  workflow_dispatch:
+
+jobs:
+  tempGitTests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.1
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v6.2.0
+      - name: Installing npm from package.json
+        run: npm ci
+      - name: Installing browsers
+        run: npx playwright install --with-deps
+      - name: Run tests
+        run: npm t
+      
