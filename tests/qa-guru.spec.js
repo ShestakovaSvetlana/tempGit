@@ -1,86 +1,60 @@
-import { test, expect } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from '../src/helpers/fixtures/fixture';
 import { faker } from '@faker-js/faker';
-import { App } from '../src/pages/app.page';
-import { UserBuilder, ArticleBuilder } from '../src/pages/helpers/builders/index';
+import { UserBuilder, ArticleBuilder } from '../src/helpers/builders/index';
 
-async function registerUser(page, user, app) {
-    await app.mainPage.open(url);
-    await app.mainPage.gotoRegister();
-    await app.registerPage.register(user.name, user.email, user.password);
-}
+test.describe('User Profile Management', () => {
+    test('should allow user to change profile name', async ({ authenticatedUser }) => {
+        const { app } = authenticatedUser;
+        const newUserName = faker.person.fullName(); 
 
-const url = 'https://realworld.qa.guru/';
+        await app.homePage.gotoSettings();
+        await app.settingsPage.changeName(newUserName);
+        await expect(app.settingsPage.getProfileNameLocator()).toContainText(newUserName);
+    });
 
-test('User can change his name', async ({ page }) => {
-    const user = new UserBuilder().withEmail().withName().withPassword().build();
-    const newUserName = faker.person.fullName(); 
-    
-    const app = new App(page);
+    test('User can change his password', async ({ authenticatedUser }) => {
+        const { user, app } = authenticatedUser;
+        const newPassword = faker.internet.password({ length: 10 });
 
-    await registerUser(page, user, app);
+        await app.homePage.gotoSettings();
+        await app.settingsPage.changePassword(newPassword);
+        await app.homePage.logOut();
 
-    await app.homePage.gotoSettings();
-    await app.settingsPage.changeName(newUserName);
-    await expect(app.settingsPage.getProfileNameLocator()).toContainText(newUserName);
+        await app.mainPage.gotoLogin();
+        await app.loginPage.login(user.email, newPassword);
+
+        await expect(app.homePage.getProfileNameLocator()).toContainText(user.name);
+    });
 });
 
-test('User can change his password', async ({ page }) => {
-    const user = new UserBuilder().withEmail().withName().withPassword().build();
-    const newPassword = faker.internet.password({ length: 10 });
+test.describe('Article Management', () => {
+    test('User can create new article', async ({ authenticatedUser }) => {
+        const { app } = authenticatedUser;
+        const article = new ArticleBuilder().withTag().build();
 
-    const app = new App(page);
+        await app.homePage.gotoNewArticle();
+        await app.newArticlePage.createNewArticle(article.title, article.topic, article.content, article.tag);
 
-    await registerUser(page, user, app);
+        expect(await app.viewArticlePage.getArticleContent()).toContain(article.content);
+    });
 
-    await app.homePage.gotoSettings();
-    await app.settingsPage.changePassword(newPassword);
-    await app.homePage.logOut();
+    test('User can create new comment on the article', async ({ articleWithUser }) => {
+        const { app } = articleWithUser;
+        const commentText = faker.string.fromCharacters('abcdefghijklmnopqrstuvwxyz', 20);
 
-    await app.mainPage.gotoLogin();
-    await app.loginPage.login(user.email, newPassword);
+        await app.viewArticlePage.createNewComment(commentText);
 
-    await expect(app.homePage.getProfileNameLocator()).toContainText(user.name);
-});
+        expect(await app.viewArticlePage.getCommentContent()).toContain(commentText);
+    });
 
-test('User can create new article', async ({ page }) => {
-    const app = new App(page);
-    const user = new UserBuilder().withEmail().withName().withPassword().build();
-    const article = new ArticleBuilder().withTag().build();
+    test('User can edit his article', async ({ articleWithUser }) => {
+        const { app } = articleWithUser;
+        const newArticle = new ArticleBuilder().withTag().build();
 
-    await registerUser(page, user, app);
-    await app.homePage.gotoNewArticle();
-    await app.newArticlePage.createNewArticle(article.title, article.topic, article.content, article.tag);
+        await app.viewArticlePage.gotoEditArticle();
+        await app.editArticlePage.updateArticle(newArticle.title, newArticle.topic, newArticle.content, newArticle.tag);
 
-    expect(await app.viewArticlePage.getArticleContent()).toContain(article.content);
-});
-
-test('User can create new comment on the article', async ({ page }) => {
-    const app = new App(page);
-
-    const user = new UserBuilder().withEmail().withName().withPassword().build(); 
-    const article = new ArticleBuilder().withTag().build();
-    const commentText = faker.string.fromCharacters('abcdefghijklmnopqrstuvwxyz', 20);
-
-    await registerUser(page, user, app);
-    await app.homePage.gotoNewArticle();
-    await app.newArticlePage.createNewArticle(article.title, article.topic, article.content, article.tag);
-    await app.viewArticlePage.createNewComment(commentText);
-
-    expect(await app.viewArticlePage.getCommentContent()).toContain(commentText);
-});
-
-test('User can edit his article', async ({ page }) => {
-    const app = new App(page);
-
-    const user = new UserBuilder().withEmail().withName().withPassword().build();
-    const article = new ArticleBuilder().withTag().build();
-    const newArticle = new ArticleBuilder().withTag().build();
-
-    await registerUser(page, user, app);
-    await app.homePage.gotoNewArticle();
-    await app.newArticlePage.createNewArticle(article.title, article.topic, article.content, article.tag);
-    await app.viewArticlePage.gotoEditArticle();
-    await app.editArticlePage.updateArticle(newArticle.title, newArticle.topic, newArticle.content, newArticle.tag);
-
-    expect(await app.viewArticlePage.getArticleContent()).toContain(newArticle.content);
+        expect(await app.viewArticlePage.getArticleContent()).toContain(newArticle.content);
+    });
 });
